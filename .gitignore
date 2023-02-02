@@ -1,0 +1,6 @@
+.idea
+.fleet
+node_modules
+
+data
+build

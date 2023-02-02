@@ -42,6 +42,7 @@ const extractKeysVals = (data: number[], stringTable: string[]): MyKeysValues[] 
     const number = data[index]
     if (number === 0) {
       keysVals.push(current)
+      current = {}
       index++
     } else {
       const key = stringTable[number]
@@ -254,8 +255,7 @@ const main = async (onNode: NodeCallback, iDidIt?: WayCallback, onRelation?: Rel
 }
 
 const onNode: NodeCallback = (node: MyNode) => {
-  // console.log({ id: node.id, lat: node.lat, lon: node.lon })
-  // console.log({ kv: node.kv })
+  console.log({ id: node.id, lat: node.lat, lon: node.lon, kv: node.kv })
 }
 const onWay: WayCallback = (way: MyWay) => {
   // console.log(`got way ${way.id}`)
@@ -263,4 +263,4 @@ const onWay: WayCallback = (way: MyWay) => {
 const onRelation: RelationCallback = (relation: MyRelation) => {
   // console.log(`got relation ${relation.id} with ${relation.nodes.length} nodes`)
 }
-main(onNode, onWay, onRelation).then(() => console.log("Done"))
+main(onNode).then(() => console.log("Done"))

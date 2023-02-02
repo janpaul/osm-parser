@@ -192,26 +192,26 @@ const main = async (onNode: NodeCallback, iDidIt?: WayCallback, onRelation?: Rel
           }
         }
         if (relations && relations.length > 0) {
-          console.log(`parsing ${relations.length} relations in group, ${Object.keys(blockNodes).length} nodes`)
+          console.log(`parsing ${relations.length} relations in group from ${Object.keys(blockNodes).length} nodes`)
           for (const relation of relations) {
             const keys = relation.getKeysList().map((i) => stringTable[i])
             const vals = relation.getValsList().map((i) => stringTable[i])
-            const roles = relation.getRolesSidList()
+            const roles = relation.getRolesSidList().map((i) => stringTable[i])
             const members = relation.getMemidsList()
             const types = relation.getTypesList()
             let member = 0
-            console.log({ roles: roles.length, members: members.length, types: types.length })
+            let wayId = 0
+            // console.log({ roles: roles.length, members: members.length, types: types.length })
             const _nodes: MyRelationNode[] = []
             for (let i = 0; i < roles.length; i++) {
-              member += members[i]
-              console.log({ member, m: members[i] })
               const role = roles[i]
               const type = types[i]
+              member += members[i]
               // console.log({ role, s: stringTable[role] })
               switch (type) {
                 case 0: {
                   const node = blockNodes[member]
-                  // console.log(node ? { node } : `node ${member} not found`)
+                  // console.log(node ? { node, role } : `node ${member} not found (role=${role})`)
                   if (node) {
                     _nodes.push({ ...node, role })
                   }
@@ -229,6 +229,11 @@ const main = async (onNode: NodeCallback, iDidIt?: WayCallback, onRelation?: Rel
                 }
                 case 2: {
                   const other = blockRelations[member]
+                  if (other) {
+                    for (const node of other.nodes) {
+                      _nodes.push({ ...node, role })
+                    }
+                  }
                   // console.log(other ? { other } : `relation ${member} not found`)
                   break
                 }

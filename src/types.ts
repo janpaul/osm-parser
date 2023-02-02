@@ -15,7 +15,7 @@ export type MyWay = {
   kv: MyKeysValues
 }
 export type MyRelationNode = MySimpleNode & {
-  role: number
+  role: string
 }
 export type MyRelation = {
   id: number

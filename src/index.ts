@@ -6,7 +6,11 @@ import { toNetworkByteOrder } from "./lib"
 import type { MyKeysValues, MyNode, MySimpleNode, MyWay, MyRelation } from "./types"
 import { MyRelationNode } from "./types"
 
-const [, , , inputFile] = process.argv
+/* CUSTOMIZE ME */
+const inputFile = "data/monaco-latest.osm.pbf"
+const countryCode = "MC"
+/* END CUSTOMIZE ME */
+
 console.log(`parsing ${inputFile}`)
 
 const textDecoder = new TextDecoder()
@@ -80,6 +84,7 @@ type WayCallback = (arg0: MyWay) => void
 type RelationCallback = (arg0: MyRelation) => void
 
 const main = async (onNode: NodeCallback, iDidIt?: WayCallback, onRelation?: RelationCallback) => {
+  const shouldStore = iDidIt && onRelation
   const fileSize = await getFilesizeInBytes(inputFile)
   const f = await open(inputFile, "r")
   let bytesRead = 0
@@ -154,6 +159,8 @@ const main = async (onNode: NodeCallback, iDidIt?: WayCallback, onRelation?: Rel
           const ids = dense.getIdList()
           const lats = dense.getLatList()
           const lons = dense.getLonList()
+          const info = dense.getDenseinfo()
+          console.log({ info })
           const keysVals = extractKeysVals(dense.getKeysValsList(), stringTable)
           // console.log({ ids: ids.length, lats: lats.length, lons: lons.length, keysVals: keysVals.length })
           let id = 0,
@@ -166,13 +173,13 @@ const main = async (onNode: NodeCallback, iDidIt?: WayCallback, onRelation?: Rel
             const elat = calculateLatitude(lat)
             const elon = calculateLongitude(lon)
             const snode: MySimpleNode = { id, lat: elat, lon: elon }
-            blockNodes[id] = snode
+            shouldStore && (blockNodes[id] = snode)
             const node: MyNode = { ...snode, kv: keysVals[i] }
             onNode(node)
             // console.log(`DENSENODE=cached nodes:`, Object.keys(blockNodes).length)
           }
         }
-        if (ways && ways.length > 0) {
+        if (shouldStore && ways && ways.length > 0) {
           console.log(`parsing ${ways.length} ways in group`)
           // console.log(`WAYS=cached nodes:`, Object.keys(blockNodes).length)
           for (const way of ways) {
@@ -192,7 +199,7 @@ const main = async (onNode: NodeCallback, iDidIt?: WayCallback, onRelation?: Rel
             iDidIt && iDidIt(myWay)
           }
         }
-        if (relations && relations.length > 0) {
+        if (shouldStore && relations && relations.length > 0) {
           console.log(`parsing ${relations.length} relations in group from ${Object.keys(blockNodes).length} nodes`)
           for (const relation of relations) {
             const keys = relation.getKeysList().map((i) => stringTable[i])
@@ -254,8 +261,15 @@ const main = async (onNode: NodeCallback, iDidIt?: WayCallback, onRelation?: Rel
   }
 }
 
+const isPotentialPointOfInterest = ($: MyKeysValues): boolean => {
+  return !!$["amenity"] // && (!!$["name"] || !!$["name:en"]) && !!$["addr:city"] && !!$["addr:street"]
+}
+
 const onNode: NodeCallback = (node: MyNode) => {
-  console.log({ id: node.id, lat: node.lat, lon: node.lon, kv: node.kv })
+  const $ = node.kv
+  if (isPotentialPointOfInterest($) && $["amenity"] === "restaurant") {
+    console.log({ id: node.id, lat: node.lat, lon: node.lon, kv: node.kv })
+  }
 }
 const onWay: WayCallback = (way: MyWay) => {
   // console.log(`got way ${way.id}`)
